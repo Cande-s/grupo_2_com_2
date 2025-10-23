@@ -1,3 +1,5 @@
+com/is1/proyecto/models/Profesores.class
 com/is1/proyecto/App.class
+com/is1/proyecto/models/Personas.class
 com/is1/proyecto/models/User.class
 com/is1/proyecto/config/DBConfigSingleton.class
