@@ -1,55 +1,30 @@
 package com.is1.proyecto.models;
-
-import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
 @Table("persons")
-public class Personas extends Model {
-    public String getNombre() {
-        return getString("nombre"); // Obtiene el valor de la columna 'nombre'
-    }
+public interface Personas {
 
-    public void setNombre(String nombre) {
-        set("nombre", nombre); // Establece el valor para la columna 'nombre'
-    }
+    public String getNombre();
 
-    public Integer getDni() {
-        return getInteger("dni"); // Obtiene el valor de la columna 'dni'
-    }
+    public void setNombre(String nombre);
 
-    public void setDni(Integer dni) {
-        set("dni", dni); // Establece el valor para la columna 'dni'
-    }
+    public Integer getDni();
 
-    public String getApellido() {
-        return getString("apellido"); // Obtiene el valor de la columna 'apellido'
-    }
+    public void setDni(Integer dni);
 
-    public void setApellido(String apellido) {
-        set("apellido", apellido); // Establece el valor para la columna 'apellido'
-    }
+    public String getApellido();
 
-    public String getDireccion() {
-        return getString("direccion"); // Obtiene el valor de la columna 'direccion'
-    }
+    public void setApellido(String apellido);
 
-    public void setDireccion(String direccion) {
-        set("direccion", direccion); // Establece el valor para la columna 'direccion'
-    }
+    public String getDireccion();
 
-    public Integer getTelefono() {
-        return getInteger("telefono"); // Obtiene el valor de la columna 'telefono'
-    }
+    public void setDireccion(String direccion);
 
-    public void setTelefono(Integer telefono) {
-        set("telefono", telefono); // Establece el valor para la columna 'telefono'
-    }
+    public Integer getTelefono();
 
-    public String getCorreo() {
-        return getString("correo");
-    }
+    public void setTelefono(Integer telefono);
 
-    public void setCorreo(String correo) {
-        set("correo", correo);
-    }
+    public String getCorreo();
+
+    public void setCorreo(String correo);
 }
