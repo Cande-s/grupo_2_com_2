@@ -19,7 +19,6 @@ import java.util.Map; // Interfaz Map, utilizada para Map.of() o HashMap.
 // Importaciones de clases del proyecto
 import com.is1.proyecto.config.DBConfigSingleton; // Clase Singleton para la configuración de la base de datos.
 import com.is1.proyecto.models.User; // Modelo de ActiveJDBC que representa la tabla 'users'.
-import com.is1.proyecto.models.Personas; // modelo para la tabla 'persons'
 import com.is1.proyecto.models.Profesores; // modelo para la tabla 'professors'
 
 /**
@@ -286,6 +285,104 @@ public class App {
                 return new ModelAndView(model, "login.mustache"); // Renderiza la plantilla de login con error.
             }
         }, new MustacheTemplateEngine()); // Especifica el motor de plantillas para esta ruta POST.
+        // POST: Maneja el envío del formulario de Alta de Profesor (HU001)
+        post("/profesor/alta", (req, res) -> {
+            // datos del profesor
+            String nombre = req.queryParams("nombre");
+            String apellido = req.queryParams("apellido");
+            String correo = req.queryParams("correo");
+            String dniStr = req.queryParams("dni");
+            String direccion = req.queryParams("direccion");
+            String telefonoStr = req.queryParams("telefono");
+            String legajoStr = req.queryParams("legajo");
+            String cargo = req.queryParams("cargo");
+            String password = req.queryParams("password");
+
+            // Validaciones básicas: campos no pueden ser nulos o vacíos.
+            if (nombre == null || nombre.isEmpty() ||
+                    apellido == null || apellido.isEmpty() ||
+                    correo == null || correo.isEmpty() ||
+                    dniStr == null || dniStr.isEmpty() ||
+                    legajoStr == null || legajoStr.isEmpty() ||
+                    password == null || password.isEmpty()) {
+
+                res.status(400);
+                res.redirect(
+                        "/profesor/alta?error=Faltan campos obligatorios: nombre, apellido, correo, DNI, legajo y contraseña son requeridos.");
+                return "";
+            }
+
+            // Validar que DNI y Legajo sean números
+            Integer dni, legajo;
+            try {
+                dni = Integer.valueOf(dniStr.trim());
+                legajo = Integer.valueOf(legajoStr.trim());
+            } catch (NumberFormatException e) {
+                res.status(400);
+                res.redirect("/profesor/alta?error=DNI y Legajo deben ser números válidos.");
+                return "";
+            }
+
+            // validacion: que este dni, correo, legajo
+            if (Profesores.findFirst("correo = ?", correo) != null) {
+                res.status(409);
+                res.redirect("/profesor/alta?error=El correo electrónico ya existe en la base de datos.");
+                return "";
+            }
+            if (Profesores.findFirst("dni = ?", dni) != null) {
+                res.status(409);
+                res.redirect("/profesor/alta?error=El DNI ya existe en la base de datos.");
+                return "";
+            }
+            if (Profesores.findFirst("legajo = ?", legajo) != null) {
+                res.status(409);
+                res.redirect("/profesor/alta?error=El número de legajo ya existe en la base de datos.");
+                return "";
+            }
+
+            try {
+                // crear un nuevo usuario
+                User newUser = new User();
+                String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+                // Usamos el DNI como nombre de usuario inicial
+                newUser.set("name", dni.toString());
+                newUser.set("password", hashedPassword);
+                newUser.saveIt();
+
+                // crear el registro del profesor con sus atributos
+                Profesores profesor = new Profesores();
+                profesor.set("nombre", nombre);
+                profesor.set("apellido", apellido);
+                profesor.set("correo", correo);
+                profesor.set("dni", dni);
+                profesor.set("legajo", legajo);
+                profesor.set("cargo", cargo);
+
+                if (direccion != null && !direccion.isEmpty())
+                    profesor.set("direccion", direccion);
+                if (telefonoStr != null && !telefonoStr.isEmpty()) {
+                    try {
+                        profesor.set("telefono", Integer.valueOf(telefonoStr.trim()));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+
+                profesor.saveIt();
+
+                // si el profesor se creo tenemos un user con exito
+                res.status(201);
+                res.redirect("/profesor/alta?message=Profesor " + nombre + " " + apellido +
+                        " registrado con éxito. Su usuario inicial es el DNI: " + dni);
+                return "";
+
+            } catch (Exception e) {
+                System.err.println("Error al registrar profesor: " + e.getMessage());
+                e.printStackTrace();
+                res.status(500);
+                res.redirect("/profesor/alta?error=Error interno al registrar profesor. Intente nuevamente.");
+                return "";
+            }
+        });
 
         // POST: Endpoint para añadir usuarios (API que devuelve JSON, no HTML).
         // Advertencia: Esta ruta tiene un propósito diferente a las de formulario HTML.
