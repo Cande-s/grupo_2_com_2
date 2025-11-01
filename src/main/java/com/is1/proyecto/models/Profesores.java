@@ -4,7 +4,7 @@ import org.javalite.activejdbc.Model;
 import org.javalite.activejdbc.annotations.Table;
 
 @Table("professors")
-public class Profesores extends Model implements Personas {
+public class Profesores extends Model {
     public Integer getLegajo() {
         return getInteger("legajo"); // Obtiene el valor de la columna 'legajo'
     }
