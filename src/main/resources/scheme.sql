@@ -13,7 +13,7 @@ CREATE TABLE users (
 CREATE TABLE professors (
     id_prof INTEGER PRIMARY KEY,
     dni INTEGER NOT NULL UNIQUE,
-    legajo INTEGER,
+    legajo INTEGER NOT NULL UNIQUE,
     nombre TEXT NOT NULL,
     apellido TEXT NOT NULL,
     direccion TEXT,

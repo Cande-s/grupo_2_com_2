@@ -100,7 +100,8 @@ public class App {
             // Renderiza la plantilla 'user_form.mustache' con los datos del modelo.
             return new ModelAndView(model, "user_form.mustache");
         }, new MustacheTemplateEngine()); // Especifica el motor de plantillas para esta ruta.
-        get("/profesor/alta", (req, res) -> {
+        
+         get("/profesor/alta", (req, res) -> {
             Map<String, Object> model = new HashMap<>();
             String successMessage = req.queryParams("message");
             // Obtengo y añado el mensaje de error de los query parameters
@@ -285,6 +286,7 @@ public class App {
                 return new ModelAndView(model, "login.mustache"); // Renderiza la plantilla de login con error.
             }
         }, new MustacheTemplateEngine()); // Especifica el motor de plantillas para esta ruta POST.
+        
         // POST: Maneja el envío del formulario de Alta de Profesor (HU001)
         post("/profesor/alta", (req, res) -> {
             // datos del profesor

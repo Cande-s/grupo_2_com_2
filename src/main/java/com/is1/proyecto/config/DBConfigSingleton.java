@@ -13,6 +13,7 @@ public final class DBConfigSingleton {
     private final String pass;
     private final String driver;
 
+    
     // Constructor privado para evitar instanciación directa
     private DBConfigSingleton() {
         // Configuraciones para SQLite
