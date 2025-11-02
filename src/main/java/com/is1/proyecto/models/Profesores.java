@@ -21,7 +21,6 @@ public class Profesores extends Model {
         set("cargo", cargo); // Establece el valor para la columna 'cargo'
     }
 
-    //Metodos implementados de la interfaz persona (Menos setDni que está arriba)
     public String getNombre() {
         return getString("nombre"); // Obtiene el valor de la columna 'nombre'
     }
