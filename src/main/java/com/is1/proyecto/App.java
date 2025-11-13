@@ -46,34 +46,48 @@ public class App {
 
         // --- Filtro 'before' para gestionar la conexión a la base de datos ---
         // Este filtro se ejecuta antes de cada solicitud HTTP.
+        // Manejo correcto de conexión a la base usando ActiveJDBC + Spark
         before((req, res) -> {
-            try {
-                // Abre una conexión a la base de datos utilizando las credenciales del
-                // singleton.
-                Base.open(dbConfig.getDriver(), dbConfig.getDbUrl(), dbConfig.getUser(), dbConfig.getPass());
-                System.out.println(req.url());
+    if (!Base.hasConnection()) {
+        Base.open(
+            dbConfig.getDriver(),
+            dbConfig.getDbUrl(),
+            dbConfig.getUser(),
+            dbConfig.getPass()
+        );
+        System.out.println("[DEBUG] Conexión ABIERTA para: " + req.url());
+    }
 
-            } catch (Exception e) {
-                // Si ocurre un error al abrir la conexión, se registra y se detiene la
-                // solicitud
-                // con un código de estado 500 (Internal Server Error) y un mensaje JSON.
-                System.err.println("Error al abrir conexión con ActiveJDBC: " + e.getMessage());
-                halt(500, "{\"error\": \"Error interno del servidor: Fallo al conectar a la base de datos.\"}"
-                        + e.getMessage());
-            }
-        });
+    // Crear tabla users si no existe
+    Base.exec(
+        "CREATE TABLE IF NOT EXISTS users (" +
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+        "name TEXT NOT NULL UNIQUE, " +
+        "password TEXT NOT NULL)"
+    );
 
-        // --- Filtro 'after' para cerrar la conexión a la base de datos ---
-        // Este filtro se ejecuta después de que cada solicitud HTTP ha sido procesada.
-        after((req, res) -> {
-            try {
-                // Cierra la conexión a la base de datos para liberar recursos.
-                Base.close();
-            } catch (Exception e) {
-                // Si ocurre un error al cerrar la conexión, se registra.
-                System.err.println("Error al cerrar conexión con ActiveJDBC: " + e.getMessage());
-            }
-        });
+    // Crear tabla professors si no existe
+    Base.exec(
+        "CREATE TABLE IF NOT EXISTS professors (" +
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+        "dni INTEGER NOT NULL UNIQUE, " +
+        "legajo INTEGER NOT NULL UNIQUE, " +
+        "nombre TEXT NOT NULL, " +
+        "apellido TEXT NOT NULL, " +
+        "direccion TEXT, " +
+        "telefono INTEGER, " +
+        "correo TEXT NOT NULL UNIQUE, " +
+        "cargo TEXT)"
+    );
+});
+
+// Cierre seguro de conexión
+afterAfter((req, res) -> {
+    if (Base.hasConnection()) {
+        Base.close();
+        System.out.println("[DEBUG] Conexión CERRADA para: " + req.url());
+    }
+});
 
         // --- Rutas GET para renderizar formularios y páginas HTML ---
 
@@ -289,6 +303,9 @@ public class App {
         
         // POST: Maneja el envío del formulario de Alta de Profesor (HU001)
         post("/profesor/alta", (req, res) -> {
+
+            Map<String, Object> model = new HashMap<>();
+
             // datos del profesor
             String nombre = req.queryParams("nombre");
             String apellido = req.queryParams("apellido");
@@ -308,10 +325,9 @@ public class App {
                     legajoStr == null || legajoStr.isEmpty() ||
                     password == null || password.isEmpty()) {
 
-                res.status(400);
-                res.redirect(
-                        "/profesor/alta?error=Faltan campos obligatorios: nombre, apellido, correo, DNI, legajo y contraseña son requeridos.");
-                return "";
+                    model.put("errorMessage",
+                    "Faltan campos obligatorios: nombre, apellido, correo, DNI, legajo y contraseña son requeridos.");
+                    return new ModelAndView(model, "profesor_form.mustache");
             }
 
             // Validar que DNI y Legajo sean números
@@ -320,26 +336,22 @@ public class App {
                 dni = Integer.valueOf(dniStr.trim());
                 legajo = Integer.valueOf(legajoStr.trim());
             } catch (NumberFormatException e) {
-                res.status(400);
-                res.redirect("/profesor/alta?error=DNI y Legajo deben ser números válidos.");
-                return "";
+                model.put("errorMessage", "DNI y Legajo deben ser números válidos.");
+        return new ModelAndView(model, "profesor_form.mustache");
             }
 
             // validacion: que este dni, correo, legajo
             if (Profesores.findFirst("correo = ?", correo) != null) {
-                res.status(409);
-                res.redirect("/profesor/alta?error=El correo electrónico ya existe en la base de datos.");
-                return "";
+                model.put("errorMessage", "El correo electrónico ya existe en la base de datos.");
+        return new ModelAndView(model, "profesor_form.mustache");
             }
             if (Profesores.findFirst("dni = ?", dni) != null) {
-                res.status(409);
-                res.redirect("/profesor/alta?error=El DNI ya existe en la base de datos.");
-                return "";
+                model.put("errorMessage", "El DNI ya existe en la base de datos.");
+        return new ModelAndView(model, "profesor_form.mustache");
             }
             if (Profesores.findFirst("legajo = ?", legajo) != null) {
-                res.status(409);
-                res.redirect("/profesor/alta?error=El número de legajo ya existe en la base de datos.");
-                return "";
+                model.put("errorMessage", "El número de legajo ya existe en la base de datos.");
+        return new ModelAndView(model, "profesor_form.mustache");
             }
 
             try {
@@ -372,19 +384,18 @@ public class App {
                 profesor.saveIt();
 
                 // si el profesor se creo tenemos un user con exito
-                res.status(201);
-                res.redirect("/profesor/alta?message=Profesor " + nombre + " " + apellido +
-                        " registrado con éxito. Su usuario inicial es el DNI: " + dni);
-                return "";
+                // Mensaje de éxito
+        model.put("successMessage",
+            "Cuenta creada exitosamente para " + nombre + " " + apellido + "!");
 
-            } catch (Exception e) {
-                System.err.println("Error al registrar profesor: " + e.getMessage());
-                e.printStackTrace();
-                res.status(500);
-                res.redirect("/profesor/alta?error=Error interno al registrar profesor. Intente nuevamente.");
-                return "";
-            }
-        });
+        return new ModelAndView(model, "profesor_form.mustache");
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        model.put("errorMessage", "Error interno al registrar profesor. Intente nuevamente.");
+        return new ModelAndView(model, "profesor_form.mustache");
+    }
+}, new MustacheTemplateEngine());
 
         // POST: Endpoint para añadir usuarios (API que devuelve JSON, no HTML).
         // Advertencia: Esta ruta tiene un propósito diferente a las de formulario HTML.
