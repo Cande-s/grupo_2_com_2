@@ -30,4 +30,12 @@ public class User extends Model {
         set("password", password); // Establece el valor para la columna 'password'
     }
 
+     public Integer getesAdministrador() {
+        return getInteger("esAdministrador"); // Obtiene el valor de la columna 'password'
+    }
+
+    public void setesAdministrador(Integer esAdmin) {
+        set("esAdministrador", esAdmin); // Establece el valor para la columna 'password'
+    }
+
 }
