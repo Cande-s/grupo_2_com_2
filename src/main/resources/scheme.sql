@@ -7,7 +7,7 @@ CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- Clave primaria autoincremental para SQLite
     name TEXT NOT NULL UNIQUE,          -- Nombre de usuario (TEXT es el tipo de cadena recomendado para SQLite), con restricción UNIQUE
     password TEXT NOT NULL,           -- Contraseña hasheada (TEXT es el tipo de cadena recomendado para SQLite)
-    esAdministrador INTEGER NOT NULL CHECK (esAdministrador IN (0, 1)) --Atributo ""booleano"" (Si es 0 es false, si es 1 es true)
+    esAdministrador INTEGER NOT NULL CHECK (esAdministrador IN (0, 1)) DEFAULT 0 --Atributo ""booleano"" (Si es 0 es false, si es 1 es true)
 );
     
 

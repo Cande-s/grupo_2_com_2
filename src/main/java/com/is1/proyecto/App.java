@@ -210,6 +210,7 @@ public class App {
 
                 ac.set("name", name); // Asigna el nombre de usuario.
                 ac.set("password", hashedPassword); // Asigna la contraseña hasheada.
+                ac.set("esAdministrador", 0); //El usuario NO es administrador
                 ac.saveIt(); // Guarda el nuevo usuario en la tabla 'users'.
 
                 res.status(201); // Código de estado HTTP 201 (Created) para una creación exitosa.
