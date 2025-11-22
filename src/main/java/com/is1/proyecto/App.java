@@ -283,7 +283,7 @@ public class App {
                 System.out.println("DEBUG: ID de Sesión: " + req.session().id());
 
                 
-                // --- FIX DE ROBUSTEZ: Aseguramos la conversión a Boolean ---
+                //Aseguramos la conversión a Boolean
                 // Leemos el valor como un Object y verificamos si es Integer o Number.
                 Object adminValue = ac.get("esAdministrador");
                 boolean isAdmin = false;
@@ -293,7 +293,7 @@ public class App {
                     if (adminValue instanceof Number) {
                         isAdmin = ((Number) adminValue).intValue() == 1;
                     }
-                    // Si el valor es directamente un Boolean (menos probable en ActiveJDBC), lo usamos.
+                    // Si el valor es directamente un Boolean, lo usamos.
                     else if (adminValue instanceof Boolean) {
                         isAdmin = (Boolean) adminValue;
                     }
@@ -303,8 +303,7 @@ public class App {
                 
                 System.out.println("DEBUG LOGIN: El usuario '" + username + "' tiene esAdministrador=" + adminValue + ". El flag en sesión es: " + isAdmin);
 
-                // --- REDIRECCIÓN INMEDIATA (Lo más limpio para Spark) ---
-                // Redirigimos inmediatamente al GET /dashboard para que cargue la página
+                // REDIRECCIÓN INMEDIATA al GET /dashboard para que cargue la página
                 res.redirect("/dashboard");
                 return null;
                 
@@ -438,14 +437,8 @@ public class App {
             }
 
             try {
-                // --- Creación y guardado del usuario usando el modelo ActiveJDBC ---
+                
                 User newUser = new User(); // Crea una nueva instancia de tu modelo User.
-                // ¡ADVERTENCIA DE SEGURIDAD CRÍTICA!
-                // En una aplicación real, las contraseñas DEBEN ser hasheadas (ej. con BCrypt)
-                // ANTES de guardarse en la base de datos, NUNCA en texto plano.
-                // (Nota: El código original tenía la contraseña en texto plano aquí.
-                // Se recomienda usar `BCrypt.hashpw(password, BCrypt.gensalt())` como en la
-                // ruta '/user/new').
                 newUser.set("name", name); // Asigna el nombre al campo 'name'.
                 newUser.set("password", password); // Asigna la contraseña al campo 'password'.
                 newUser.saveIt(); // Guarda el nuevo usuario en la tabla 'users'.
