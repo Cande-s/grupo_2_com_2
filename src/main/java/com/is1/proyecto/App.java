@@ -125,6 +125,8 @@ public class App {
             // Intenta obtener el nombre de usuario y la bandera de login de la sesión.
             String currentUsername = req.session().attribute("currentUserUsername");
             Boolean loggedIn = req.session().attribute("loggedIn");
+            Boolean esAdministrador = req.session().attribute("esAdministrador"); 
+
 
             // 1. Verificar si el usuario ha iniciado sesión.
             // Si no hay un nombre de usuario en la sesión, la bandera es nula o falsa,
@@ -139,6 +141,10 @@ public class App {
             // 2. Si el usuario está logueado, añade el nombre de usuario al modelo para la
             // plantilla.
             model.put("username", currentUsername);
+
+           if (esAdministrador != null && esAdministrador) {
+                model.put("esAdministrador", true);
+            }
 
             // 3. Renderiza la plantilla del dashboard con el nombre de usuario.
             return new ModelAndView(model, "dashboard.mustache");
@@ -276,9 +282,33 @@ public class App {
                 System.out.println("DEBUG: Login exitoso para la cuenta: " + username);
                 System.out.println("DEBUG: ID de Sesión: " + req.session().id());
 
-                model.put("username", username); // Añade el nombre de usuario al modelo para el dashboard.
-                // Renderiza la plantilla del dashboard tras un login exitoso.
-                return new ModelAndView(model, "dashboard.mustache");
+                
+                // --- FIX DE ROBUSTEZ: Aseguramos la conversión a Boolean ---
+                // Leemos el valor como un Object y verificamos si es Integer o Number.
+                Object adminValue = ac.get("esAdministrador");
+                boolean isAdmin = false;
+                
+                if (adminValue != null) {
+                    // Si el valor es un Integer (o Number), lo comparamos con 1.
+                    if (adminValue instanceof Number) {
+                        isAdmin = ((Number) adminValue).intValue() == 1;
+                    }
+                    // Si el valor es directamente un Boolean (menos probable en ActiveJDBC), lo usamos.
+                    else if (adminValue instanceof Boolean) {
+                        isAdmin = (Boolean) adminValue;
+                    }
+                }
+                
+                req.session().attribute("esAdministrador", isAdmin);
+                
+                System.out.println("DEBUG LOGIN: El usuario '" + username + "' tiene esAdministrador=" + adminValue + ". El flag en sesión es: " + isAdmin);
+
+                // --- REDIRECCIÓN INMEDIATA (Lo más limpio para Spark) ---
+                // Redirigimos inmediatamente al GET /dashboard para que cargue la página
+                res.redirect("/dashboard");
+                return null;
+                
+                
             } else {
                 // Contraseña incorrecta.
                 res.status(401); // Unauthorized.
