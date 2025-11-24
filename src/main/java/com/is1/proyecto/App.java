@@ -431,12 +431,8 @@ public class App {
 
                 // si el profesor se creo tenemos un user con exito
                 res.status(201);
-                res.redirect("/profesor/alta?message=Profesor " + nombre + " " + apellido +
-<<<<<<< HEAD
-                        " registrado con exito. Su usuario inicial es: " + name);
-=======
-                        " registrado con exito. Su usuario inicial es el DNI: " + dni);
->>>>>>> 72057f94fb2713a3152bbe61b94567b5658b698f
+                String msg1 = "Profesor " + nombre + " " + apellido + " registrado con éxito. Su usuario inicial es: " + name;
+                res.redirect("/profesor/alta?message=" + URLEncoder.encode(msg1, StandardCharsets.UTF_8));
                 return "";
 
             } catch (Exception e) {
