@@ -1,8 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.is1.proyecto.AppTest
--------------------------------------------------------------------------------
-<<<<<<< HEAD
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.054 s -- in com.is1.proyecto.AppTest
-=======
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.030 s -- in com.is1.proyecto.AppTest
->>>>>>> 7cec75d9fc26fd625608b0f115769a68e759e446
