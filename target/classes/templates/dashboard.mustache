@@ -30,6 +30,12 @@
             </div>
         </div>
 
+        {{#esAdministrador}}
+          <div class="text-center mt-6">
+            <a href="/profesor/alta" class="inline-block bg-blue-600 text-white py-2 px-8 rounded-md hover:bg-red-700 transition duration-300 text-lg">Cargar nuevo profesor</a>
+          </div>
+        {{/esAdministrador}}
+
         <div class="text-center mt-6">
             <a href="/logout" class="inline-block bg-red-600 text-white py-2 px-6 rounded-md hover:bg-red-700 transition duration-300 text-lg">Cerrar Sesión</a>
         </div>
