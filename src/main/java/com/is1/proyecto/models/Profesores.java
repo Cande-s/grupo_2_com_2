@@ -1,15 +1,21 @@
 package com.is1.proyecto.models;
 
 import org.javalite.activejdbc.Model;
+import org.javalite.activejdbc.annotations.IdName;
 import org.javalite.activejdbc.annotations.Table;
 
 @Table("professors")
+@IdName("id_prof")
 public class Profesores extends Model {
+
+    public void setIdProf(Integer idProf) {
+        set("id_prof", idProf); // Establece el valor para la columna 'id_prof'
+    }
     public Integer getLegajo() {
         return getInteger("legajo"); // Obtiene el valor de la columna 'legajo'
     }
 
-    public void setDni(Integer legajo) {
+    public void setLegajo(Integer legajo) {
         set("legajo", legajo); // Establece el valor para la columna 'legajo'
     }
 
@@ -31,6 +37,10 @@ public class Profesores extends Model {
 
     public Integer getDni() {
         return getInteger("dni"); // Obtiene el valor de la columna 'dni'
+    }
+
+    public void setDni(Integer dni) {
+        set("dni", dni); // Establece el valor para la columna 'dni'
     }
 
     public String getApellido() {

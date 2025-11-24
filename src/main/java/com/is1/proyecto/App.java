@@ -16,6 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 // Importaciones estándar de Java
 import java.util.HashMap; // Para crear mapas de datos (modelos para las plantillas).
+import java.util.List;
 import java.util.Map; // Interfaz Map, utilizada para Map.of() o HashMap.
 
 // Importaciones de clases del proyecto
@@ -195,6 +196,54 @@ public class App {
                                                                             // formulario.
         }, new MustacheTemplateEngine()); // Especifica el motor de plantillas para esta ruta.
 
+        // GET: Ver perfil del usuario
+        get("/profile", (req, res) -> {
+            Map<String, Object> model = new HashMap<>();
+
+            // Verificación de sesión
+            if (req.session().attribute("loggedIn") == null) {
+                res.redirect("/login");
+                return null;
+            }
+
+            // Obtener datos básicos del usuario
+            String name = req.session().attribute("currentUserUsername");
+            Integer userId = req.session().attribute("userId");
+            
+            System.out.println("DEBUG: ID de usuario en sesión: " + userId);
+            
+            model.put("name", name);
+
+            // Buscar si este usuario es un profesor
+            // Como comparten ID (id_prof = user_id), buscamos por ID directamente.
+            Profesores profe = Profesores.findById(userId);
+            System.out.println("DEBUG: Resultado de búsqueda de profesor: " + profe);
+
+            if (profe != null) {
+                // Es un profesor: Pasamos sus datos a la vista
+                model.put("isProfessor", true);
+                model.put("nombre", profe.getString("nombre"));
+                model.put("apellido", profe.getString("apellido"));
+                model.put("dni", profe.get("dni"));
+                model.put("legajo", profe.get("legajo"));
+                model.put("cargo", profe.getString("cargo"));
+                model.put("correo", profe.getString("correo"));
+                
+                // Manejo de campos opcionales para que no muestre "null"
+                Object tel = profe.get("telefono");
+                if (tel != null) model.put("telefono", tel);
+                
+                String dir = profe.getString("direccion");
+                if (dir != null && !dir.isEmpty()) model.put("direccion", dir);
+                
+            } else {
+                // No es profesor (es solo admin o usuario base)
+                model.put("isProfessor", false);
+            }
+
+            return new ModelAndView(model, "profile.mustache");
+        }, new MustacheTemplateEngine());
+
         // --- Rutas POST para manejar envíos de formularios y APIs ---
 
         // POST: Maneja el envío del formulario de creación de nueva cuenta.
@@ -343,7 +392,7 @@ public class App {
                     dniStr == null || dniStr.isEmpty() ||
                     legajoStr == null || legajoStr.isEmpty() ||
                     password == null || password.isEmpty() ||
-                    name == null || name.isEmpty()) { // No olvidar username aqui
+                    name == null || name.isEmpty()) { 
 
                 res.status(400);
                 String msg = "Faltan campos obligatorios: nombre, apellido, correo, DNI, legajo, usuario y contraseña son requeridos.";
@@ -392,7 +441,7 @@ public class App {
                 res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
-            // Validar duplicados (Username - NUEVO)
+            // Validar duplicados (Username)
             if (User.findFirst("name = ?", name) != null) {
                 res.status(409);
                 String msg = "El nombre de usuario ya está en uso. Elija otro.";
@@ -404,30 +453,26 @@ public class App {
                 // crear un nuevo usuario
                 User newUser = new User();
                 String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-                // Usamos el DNI como nombre de usuario inicial
                 newUser.set("name", name);
                 newUser.set("password", hashedPassword);
                 newUser.saveIt();
+                
+                Object userId = newUser.getId(); 
+                System.out.println("DEBUG: Usuario creado con ID: " + userId);
 
-                // crear el registro del profesor con sus atributos
-                Profesores profesor = new Profesores();
-                profesor.set("nombre", nombre);
-                profesor.set("apellido", apellido);
-                profesor.set("correo", correo);
-                profesor.set("dni", dni);
-                profesor.set("legajo", legajo);
-                profesor.set("cargo", cargo);
-
-                if (direccion != null && !direccion.isEmpty())
-                    profesor.set("direccion", direccion);
+                String sql = "INSERT INTO professors (id_prof, nombre, apellido, dni, legajo, correo, cargo, direccion, telefono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
+                // Preparamos los valores opcionales para que sean null si están vacíos
+                Object dirVal = (direccion != null && !direccion.isEmpty()) ? direccion : null;
+                Object telVal = null;
                 if (telefonoStr != null && !telefonoStr.isEmpty()) {
-                    try {
-                        profesor.set("telefono", Integer.valueOf(telefonoStr.trim()));
-                    } catch (NumberFormatException ignored) {
-                    }
+                     try { telVal = Integer.valueOf(telefonoStr.trim()); } catch (Exception e) {}
                 }
 
-                profesor.saveIt();
+                // Ejecutamos la inserción manual vinculando los IDs
+                Base.exec(sql, userId, nombre, apellido, dni, legajo, correo, cargo, dirVal, telVal);
+
+                System.out.println("DEBUG: Profesor insertado manualmente con ID: " + userId);
 
                 // si el profesor se creo tenemos un user con exito
                 res.status(201);

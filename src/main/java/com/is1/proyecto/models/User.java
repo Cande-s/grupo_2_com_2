@@ -38,4 +38,8 @@ public class User extends Model {
         set("esAdministrador", esAdmin); // Establece el valor para la columna 'password'
     }
 
+    public Integer getId() {
+        return getInteger("id"); // Obtiene el valor de la columna 'id'
+    }
+
 }
