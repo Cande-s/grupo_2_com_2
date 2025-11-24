@@ -409,7 +409,7 @@ public class App {
                 // si el profesor se creo tenemos un user con exito
                 res.status(201);
                 res.redirect("/profesor/alta?message=Profesor " + nombre + " " + apellido +
-                        " registrado con éxito. Su usuario inicial es el DNI: " + dni);
+                        " registrado con exito. Su usuario inicial es el DNI: " + dni);
                 return "";
 
             } catch (Exception e) {
@@ -446,7 +446,7 @@ public class App {
                 res.status(201); // Created.
                 // Devuelve una respuesta JSON con el mensaje y el ID del nuevo usuario.
                 return objectMapper.writeValueAsString(
-                        Map.of("message", "Usuario '" + name + "' registrado con éxito.", "id", newUser.getId()));
+                        Map.of("message", "Usuario '" + name + "' registrado con exito.", "id", newUser.getId()));
 
             } catch (Exception e) {
                 // Si ocurre cualquier error durante la operación de DB, se captura aquí.

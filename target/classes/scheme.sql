@@ -7,8 +7,10 @@ CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- Clave primaria autoincremental para SQLite
     name TEXT NOT NULL UNIQUE,          -- Nombre de usuario (TEXT es el tipo de cadena recomendado para SQLite), con restricción UNIQUE
     password TEXT NOT NULL,           -- Contraseña hasheada (TEXT es el tipo de cadena recomendado para SQLite)
-    esAdministrador INTEGER NOT NULL CHECK (esAdministrador IN (0, 1)) --Atributo ""booleano"" (Si es 0 es false, si es 1 es true)
+    esAdministrador INTEGER NOT NULL CHECK (esAdministrador IN (0, 1)) DEFAULT 0 --Atributo ""booleano"" (Si es 0 es false, si es 1 es true)
 );
+
+--ALTER TABLE users ADD COLUMN esAdministrador INTEGER NOT NULL CHECK (esAdministrador IN (0, 1)) DEFAULT 0;
     
 
 CREATE TABLE professors (
@@ -21,5 +23,5 @@ CREATE TABLE professors (
     telefono INTEGER,
     correo TEXT NOT NULL UNIQUE,
     cargo TEXT,
-    CONSTRAINT id_p_fk FOREIGN KEY id_prof REFERENCES users(id)
+    FOREIGN KEY (id_prof) REFERENCES users(id)
 );
