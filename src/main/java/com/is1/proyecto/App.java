@@ -12,6 +12,8 @@ import org.mindrot.jbcrypt.BCrypt; // Utilidad para hashear y verificar contrase
 import spark.ModelAndView; // Representa un modelo de datos y el nombre de la vista a renderizar.
 import spark.template.mustache.MustacheTemplateEngine; // Motor de plantillas Mustache para Spark.
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 // Importaciones estándar de Java
 import java.util.HashMap; // Para crear mapas de datos (modelos para las plantillas).
 import java.util.Map; // Interfaz Map, utilizada para Map.of() o HashMap.
@@ -328,61 +330,82 @@ public class App {
             String telefonoStr = req.queryParams("telefono");
             String legajoStr = req.queryParams("legajo");
             String cargo = req.queryParams("cargo");
+            String name = req.queryParams("name");
             String password = req.queryParams("password");
 
             // Validaciones básicas: campos no pueden ser nulos o vacíos.
+            // ... (dentro de post /profesor/alta) ...
+
+            // Validaciones básicas
             if (nombre == null || nombre.isEmpty() ||
                     apellido == null || apellido.isEmpty() ||
                     correo == null || correo.isEmpty() ||
                     dniStr == null || dniStr.isEmpty() ||
                     legajoStr == null || legajoStr.isEmpty() ||
-                    password == null || password.isEmpty()) {
+                    password == null || password.isEmpty() ||
+                    name == null || name.isEmpty()) { // No olvidar username aqui
 
                 res.status(400);
-                res.redirect(
-                        "/profesor/alta?error=Faltan campos obligatorios: nombre, apellido, correo, DNI, legajo y contraseña son requeridos.");
+                String msg = "Faltan campos obligatorios: nombre, apellido, correo, DNI, legajo, usuario y contraseña son requeridos.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
-            // Validar formato de correo electrónico
+
+            // Validar formato de correo
             if (!correo.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
                 res.status(400);
-                res.redirect("/profesor/alta?error=El formato del correo electrónico no es válido.");
+                String msg = "El formato del correo electrónico no es válido.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
-            // Validar que DNI y Legajo sean números
+
+            // Validar números
             Integer dni, legajo;
             try {
                 dni = Integer.valueOf(dniStr.trim());
                 legajo = Integer.valueOf(legajoStr.trim());
             } catch (NumberFormatException e) {
                 res.status(400);
-                res.redirect("/profesor/alta?error=DNI y Legajo deben ser números válidos.");
+                String msg = "DNI y Legajo deben ser números válidos.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
 
-            // validacion: que este dni, correo, legajo
+            // Validar duplicados (Correo)
             if (Profesores.findFirst("correo = ?", correo) != null) {
                 res.status(409);
-                res.redirect("/profesor/alta?error=El correo electrónico ya existe en la base de datos.");
+                String msg = "El correo electrónico ya existe en la base de datos.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
+            // Validar duplicados (DNI)
             if (Profesores.findFirst("dni = ?", dni) != null) {
                 res.status(409);
-                res.redirect("/profesor/alta?error=El DNI ya existe en la base de datos.");
+                String msg = "El DNI ya existe en la base de datos.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
+            // Validar duplicados (Legajo)
             if (Profesores.findFirst("legajo = ?", legajo) != null) {
                 res.status(409);
-                res.redirect("/profesor/alta?error=El número de legajo ya existe en la base de datos.");
+                String msg = "El número de legajo ya existe en la base de datos.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
-
+            // Validar duplicados (Username - NUEVO)
+            if (User.findFirst("name = ?", name) != null) {
+                res.status(409);
+                String msg = "El nombre de usuario ya está en uso. Elija otro.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
+                return "";
+            }
+            
             try {
                 // crear un nuevo usuario
                 User newUser = new User();
                 String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
                 // Usamos el DNI como nombre de usuario inicial
-                newUser.set("name", dni.toString());
+                newUser.set("name", name);
                 newUser.set("password", hashedPassword);
                 newUser.saveIt();
 
@@ -409,14 +432,15 @@ public class App {
                 // si el profesor se creo tenemos un user con exito
                 res.status(201);
                 res.redirect("/profesor/alta?message=Profesor " + nombre + " " + apellido +
-                        " registrado con éxito. Su usuario inicial es el DNI: " + dni);
+                        " registrado con exito. Su usuario inicial es: " + name);
                 return "";
 
             } catch (Exception e) {
                 System.err.println("Error al registrar profesor: " + e.getMessage());
                 e.printStackTrace();
                 res.status(500);
-                res.redirect("/profesor/alta?error=Error interno al registrar profesor. Intente nuevamente.");
+                String msg = "Error interno al registrar profesor. Intente nuevamente.";
+                res.redirect("/profesor/alta?error=" + URLEncoder.encode(msg, StandardCharsets.UTF_8));
                 return "";
             }
         });
